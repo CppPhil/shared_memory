@@ -7,6 +7,7 @@
 #include <string>
 
 #include "shared_memory.hpp"
+#include "shared_memory_identifier.hpp"
 #include "windows_exception.hpp"
 
 int main()
@@ -19,7 +20,7 @@ int main()
       std::wstring{sm::sharedMemoryName}};
 #else
     const sm::SharedMemoryIdentifier identifier{
-      std::string{sm::ftokFilePath, sm::projectId}};
+      std::string{sm::ftokFilePath}, sm::projectId};
 #endif
 
     sm::SharedMemory sharedMemory{
