@@ -1,9 +1,9 @@
-#include <cstdlib>
 #include <cstddef>
+#include <cstdlib>
 
-#include <stdexcept>
-#include <iostream>
 #include <array>
+#include <iostream>
+#include <stdexcept>
 #include <string>
 
 #include "shared_memory.hpp"
@@ -13,18 +13,12 @@ int main()
   try {
 #ifdef _WIN32
     const sm::SharedMemoryIdentifier identifier{
-      std::wstring{sm::sharedMemoryName}
-    };
+      std::wstring{sm::sharedMemoryName}};
 
     sm::SharedMemory sharedMemory{
-      sm::SharedMemory::Mode::Attach,
-      identifier,
-      sm::defaultSharedMemorySize
-    };
+      sm::SharedMemory::Mode::Attach, identifier, sm::defaultSharedMemorySize};
 
-    static const std::string alphabet{
-      "abcdefghijklmnopqrstuvwxyz"
-    };
+    static const std::string alphabet{"abcdefghijklmnopqrstuvwxyz"};
     std::array<char, sm::defaultSharedMemorySize> array{};
 
     for (std::size_t i{0}; i < array.size(); ++i) {
@@ -36,10 +30,11 @@ int main()
       return EXIT_FAILURE;
     }
 #endif
-  } catch (const std::runtime_error& ex) {
+  }
+  catch (const std::runtime_error& ex) {
     std::cerr << "Client caught runtime_error: " << ex.what() << '\n';
     return EXIT_FAILURE;
-  } 
+  }
 
   return EXIT_SUCCESS;
 }

@@ -6,7 +6,8 @@
 namespace sm {
 namespace {
 #ifdef _WIN32
-constexpr std::wstring_view semaphoreName{L"Global\\MY_SHARED_MEMORY_SEMAPHORE"};
+constexpr std::wstring_view semaphoreName{
+  L"Global\\MY_SHARED_MEMORY_SEMAPHORE"};
 
 [[nodiscard]] HANDLE create(LPCWSTR name, DWORD size)
 {
@@ -42,14 +43,11 @@ constexpr std::wstring_view semaphoreName{L"Global\\MY_SHARED_MEMORY_SEMAPHORE"}
 
 [[nodiscard]] HANDLE createSemaphore(LPCWSTR name)
 {
-  const HANDLE hSemaphore{
-    CreateSemaphoreW(
-      /* lpSemaphoreAttributes */ nullptr,
-      /* lInitialCount */ 0,
-      /* lMaximumCount */ 1,
-      /* lpName */ name
-    )
-  };
+  const HANDLE hSemaphore{CreateSemaphoreW(
+    /* lpSemaphoreAttributes */ nullptr,
+    /* lInitialCount */ 0,
+    /* lMaximumCount */ 1,
+    /* lpName */ name)};
 
   return hSemaphore;
 }
@@ -135,20 +133,20 @@ bool SharedMemory::write(
   }
 
   if (!ReleaseSemaphore(
-          /* hSemaphore */ m_hSemaphore, 
-          /* lReleaseCount */ 1, 
-          /* lpPreviousCount */ nullptr)) {
+        /* hSemaphore */ m_hSemaphore,
+        /* lReleaseCount */ 1,
+        /* lpPreviousCount */ nullptr)) {
     return false;
   }
 
-    std::byte* const baseAddress{static_cast<std::byte*>(m_memory)};
+  std::byte* const baseAddress{static_cast<std::byte*>(m_memory)};
 
-    std::byte* const startAddress{baseAddress + offset};
+  std::byte* const startAddress{baseAddress + offset};
 
-    CopyMemory(
-      /* Destination */ startAddress,
-      /* Source */ data,
-      /* Length */ byteCount);
+  CopyMemory(
+    /* Destination */ startAddress,
+    /* Source */ data,
+    /* Length */ byteCount);
 
   return true;
 #endif
@@ -178,7 +176,7 @@ bool SharedMemory::read(
       /* Destination */ buffer,
       /* Source */ startAddress,
       /* Length */ bytesToRead);
-      
+
     break;
   }
   case WAIT_ABANDONED:
