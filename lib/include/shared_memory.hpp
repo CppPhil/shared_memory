@@ -9,6 +9,8 @@
 
 #ifdef _WIN32
 #include <Windows.h>
+#else
+#include <semaphore.h>
 #endif
 
 namespace sm {
@@ -44,6 +46,10 @@ private:
 #ifdef _WIN32
   HANDLE m_hMapFile;
   HANDLE m_hSemaphore;
+#else
+  std::size_t m_actualByteCount;
+  int         m_sharedMemoryId;
+  sem_t*      m_semaphore;
 #endif
 };
 } // namespace sm

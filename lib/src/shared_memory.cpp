@@ -1,8 +1,17 @@
+#include <cerrno>
+#include <cstring>
+
 #include <iostream>
 #include <string_view>
 
 #include "format_windows_error.hpp"
 #include "shared_memory.hpp"
+
+#ifndef _WIN32
+#include <semaphore.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#endif // !_WIN32
 
 #ifdef _MSC_VER
 #define SM_UNREACHABLE() __assume(0)
@@ -73,7 +82,41 @@ const wchar_t* mapMode(SharedMemory::Mode mode)
   SM_UNREACHABLE();
 }
 #else
-// TODO: HERE
+key_t createIpcKey(std::string_view filePath, int projectId)
+{
+  key_t key{ftok(filePath.data(), projectId)};
+
+  if (key == -1) {
+    throw std::runtime_error{
+      "Server: ftok failed: " + std::string{std::strerror(errno)}};
+  }
+
+  return key;
+}
+
+int createSharedMemory(key_t key, std::size_t size)
+{
+  const int id{shmget(key, size, IPC_CREAT | IPC_EXCL | 0666)};
+
+  if (id == -1) {
+    throw std::runtime_error{
+      "Server: shmget failed: " + std::string{std::strerror(errno)}};
+  }
+
+  return id;
+}
+
+int fetchSharedMemoryId(key_t key, std::size_t size)
+{
+  const int id{shmget(key, size, 0666)};
+
+  if (id == -1) {
+    throw std::runtime_error{
+      "Client: shmget failed: " + std::string{std::strerror(errno)}};
+  }
+
+  return id;
+}
 
 const char* mapMode(SharedMemory::Mode mode)
 {
@@ -101,6 +144,12 @@ SharedMemory::SharedMemory(
 , m_hMapFile{INVALID_HANDLE_VALUE}, m_hSemaphore
 {
   INVALID_HANDLE_VALUE
+}
+#else
+, m_actualByteCount{m_byteCount + sizeof(sem_t)}, m_sharedMemoryId{-1},
+  m_semaphore
+{
+  nullptr
 }
 #endif
 {
@@ -139,6 +188,50 @@ SharedMemory::SharedMemory(
       + std::wstring{L": CreateSemaphoreW failed, error message: "}
       + formatWindowsError(GetLastError())};
   }
+#else
+  const key_t key{createIpcKey(identifier.filePath(), identifier.projectId())};
+
+  if (m_mode == Mode::Create) {
+    m_sharedMemoryId = createSharedMemory(key, m_actualByteCount);
+    void* memory{shmat(m_sharedMemoryId, nullptr, 0)};
+
+    if (memory == reinterpret_cast<void*>(-1)) {
+      shmctl(m_sharedMemoryId, IPC_RMID, nullptr);
+
+      throw std::runtime_error{
+        "Server: shmat failed: " + std::string{std::strerror(errno)}};
+    }
+
+    m_memory = memory;
+
+    sem_t* semaphore{static_cast<std::byte*>(m_memory) + m_byteCount};
+
+    const int statusCode{sem_init(semaphore, 1, 0)};
+
+    if (statusCode == -1) {
+      shmdt(m_memory);
+      shmctl(m_sharedMemoryId, IPC_RMID, nullptr);
+
+      throw std::runtime_error{
+        "Server: sem_init failed: " + std::string{std::strerror(errno)}};
+    }
+
+    m_semaphore = semaphore;
+  }
+  else if (mode == Mode::Attach) {
+    m_sharedMemoryId = fetchSharedMemoryId(key, m_actualByteCount);
+    void* memory{shmat(m_sharedMemoryId, nullptr, 0)};
+
+    if (memory == reinterpret_cast<void*>(-1)) {
+      throw std::runtime_error{
+        "Client: shmat failed: " + std::string{std::strerror(errno)}};
+    }
+
+    m_memory = memory;
+
+    m_semaphore = reinterpret_cast<sem_t*>(
+      static_cast<std::byte*>(m_memory) + m_byteCount);
+  }
 #endif
 }
 
@@ -163,6 +256,27 @@ SharedMemory::~SharedMemory()
                << L"~SharedMemory(): CloseHandle failed, error message: "
                << formatWindowsError(GetLastError()) << L'\n';
   }
+#else
+  if (m_mode == Mode::Create) {
+    if (sem_destroy(m_semaphore) == -1) {
+      std::cerr << mapMode(m_mode) << ": ~SharedMemory(): sem_destroy failed: "
+                << std::strerror(errno) << '\n';
+    }
+  }
+
+  if (shmdt(m_memory) == -1) {
+    std::cerr << mapMode(m_mode)
+              << ": ~SharedMemory(): shmdt failed: " << std::strerror(errno)
+              << '\n';
+  }
+
+  if (m_mode == Mode::Create) {
+    if (shmctl(m_sharetMemoryId, IPC_RMID, nullptr) == -1) {
+      std::cerr << mapMode(m_mode)
+                << ": ~SharedMemory(): shmctl failed: " << std::strerror(errno)
+                << '\n';
+    }
+  }
 #endif
 }
 
@@ -176,11 +290,11 @@ bool SharedMemory::write(
   const void*    data,
   std::size_t    byteCount)
 {
-#ifdef _WIN32
   if ((offset + byteCount) > m_byteCount) {
     return false;
   }
 
+#ifdef _WIN32
   if (!ReleaseSemaphore(
         /* hSemaphore */ m_hSemaphore,
         /* lReleaseCount */ 1,
@@ -200,6 +314,20 @@ bool SharedMemory::write(
     /* Length */ byteCount);
 
   return true;
+#else
+  if (sem_post(m_semaphore) == -1) {
+    std::cerr << mapMode(m_mode) << ": sem_post failed in SharedMemory::write: "
+              << std::strerror(errno) << '\n';
+
+    return false;
+  }
+
+  std::memcpy(
+    /* dest */ static_cast<std::byte*>(m_memory) + offset,
+    /* src */ data,
+    /* count */ byteCount);
+
+  return true;
 #endif
 }
 
@@ -208,11 +336,11 @@ bool SharedMemory::read(
   void*          buffer,
   std::size_t    bytesToRead) const
 {
-#ifdef _WIN32
   if ((offset + bytesToRead) > m_byteCount) {
     return false;
   }
 
+#ifdef _WIN32
   const DWORD waitResult{WaitForSingleObject(
     /* hHandle */ m_hSemaphore,
     /* dwMilliseconds */ INFINITE)};
@@ -249,7 +377,22 @@ bool SharedMemory::read(
   }
 
   return true;
+#else
+  const int statusCode{sem_wait(m_semaphore)};
 
+  if (statusCode == -1) {
+    std::cerr << mapMode(m_mode)
+              << ": SharedMemory::read: could not wait on semaphore: "
+              << std::strerror(errno) << '\n';
+    return false;
+  }
+
+  std::memcpy(
+    /* dest */ buffer,
+    /* src */ static_cast<const std::byte*>(m_memory) + offset,
+    /* count */ bytesToRead);
+
+  return true;
 #endif
 }
 } // namespace sm
