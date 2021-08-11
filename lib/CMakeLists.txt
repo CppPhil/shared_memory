@@ -1,8 +1,10 @@
 set(LIB_HEADERS
-    include/shared_memory_identifier.hpp)
+    include/shared_memory_identifier.hpp
+    include/shared_memory.hpp)
 
 set(LIB_SOURCES
-    src/shared_memory_identifier.cpp)
+    src/shared_memory_identifier.cpp
+    src/shared_memory.cpp)
 
 set(LIB_NAME shared_memory_lib)
 
