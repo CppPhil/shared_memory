@@ -293,15 +293,6 @@ bool SharedMemory::write(
   }
 
 #ifdef _WIN32
-  if (!ReleaseSemaphore(
-        /* hSemaphore */ m_hSemaphore,
-        /* lReleaseCount */ 1,
-        /* lpPreviousCount */ nullptr)) {
-    std::wcerr << mapMode(m_mode) << L": ReleaseSemaphore failed in write: "
-               << formatWindowsError(GetLastError()) << L'\n';
-    return false;
-  }
-
   std::byte* const baseAddress{static_cast<std::byte*>(m_memory)};
 
   std::byte* const startAddress{baseAddress + offset};
@@ -311,19 +302,28 @@ bool SharedMemory::write(
     /* Source */ data,
     /* Length */ byteCount);
 
+  if (!ReleaseSemaphore(
+        /* hSemaphore */ m_hSemaphore,
+        /* lReleaseCount */ 1,
+        /* lpPreviousCount */ nullptr)) {
+    std::wcerr << mapMode(m_mode) << L": ReleaseSemaphore failed in write: "
+               << formatWindowsError(GetLastError()) << L'\n';
+    return false;
+  }
+
   return true;
 #else
+  std::memcpy(
+    /* dest */ static_cast<std::byte*>(m_memory) + offset,
+    /* src */ data,
+    /* count */ byteCount);
+
   if (sem_post(m_semaphore) == -1) {
     std::cerr << mapMode(m_mode) << ": sem_post failed in SharedMemory::write: "
               << std::strerror(errno) << '\n';
 
     return false;
   }
-
-  std::memcpy(
-    /* dest */ static_cast<std::byte*>(m_memory) + offset,
-    /* src */ data,
-    /* count */ byteCount);
 
   return true;
 #endif
