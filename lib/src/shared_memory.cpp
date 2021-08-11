@@ -136,22 +136,19 @@ SharedMemory::SharedMemory(
   Mode                   mode,
   SharedMemoryIdentifier identifier,
   std::size_t            byteCount)
-  : m_mode{mode}, m_memory{nullptr}, m_byteCount
-{
-  byteCount
-}
+  // clang-format off
+  : m_mode{mode}
+  , m_memory{nullptr}
+  , m_byteCount{byteCount}
 #ifdef _WIN32
-, m_hMapFile{INVALID_HANDLE_VALUE}, m_hSemaphore
-{
-  INVALID_HANDLE_VALUE
-}
+  , m_hMapFile{INVALID_HANDLE_VALUE}
+  , m_hSemaphore{INVALID_HANDLE_VALUE}
 #else
-, m_actualByteCount{m_byteCount + sizeof(sem_t)}, m_sharedMemoryId{-1},
-  m_semaphore
-{
-  nullptr
-}
+  , m_actualByteCount{m_byteCount + sizeof(sem_t)}
+  , m_sharedMemoryId{-1}
+  , m_semaphore{nullptr}
 #endif
+// clang-format on
 {
 #ifdef _WIN32
   if (m_mode == Mode::Create) {
