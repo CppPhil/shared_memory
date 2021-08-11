@@ -1,7 +1,0 @@
-{
-  "files.associations": {
-    "xstring": "cpp",
-    "xutility": "cpp",
-    "stdexcept": "cpp"
-  }
-}
