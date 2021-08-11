@@ -14,11 +14,11 @@
 #
 
 COMPILER         := c++
-CXXFLAGS         := -pedantic-errors -Wall -Wextra -Werror -std=c++17
+CXXFLAGS         := -pedantic-errors -Wall -Wextra -Werror -std=c++17 -pthread
 BUILD            := ./build
 LIB_DIR          := $(BUILD)/libs
 APP_DIR          := $(BUILD)/apps
-LDFLAGS          := -L$(LIB_DIR) -lshared_memory
+LDFLAGS          := -pthread -L$(LIB_DIR) -lshared_memory
 LIB_INCLUDE      := -Ilib/include
 LIB_SRC          := $(wildcard lib/src/*.cpp)
 LIB_OBJ_DIR      := $(BUILD)/lib_objects

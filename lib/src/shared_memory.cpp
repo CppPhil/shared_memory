@@ -201,7 +201,7 @@ SharedMemory::SharedMemory(
 
     m_memory = memory;
 
-    sem_t* semaphore{static_cast<std::byte*>(m_memory) + m_byteCount};
+    sem_t* semaphore{reinterpret_cast<sem_t*>(static_cast<std::byte*>(m_memory) + m_byteCount)};
 
     const int statusCode{sem_init(semaphore, 1, 0)};
 
@@ -268,7 +268,7 @@ SharedMemory::~SharedMemory()
   }
 
   if (m_mode == Mode::Create) {
-    if (shmctl(m_sharetMemoryId, IPC_RMID, nullptr) == -1) {
+    if (shmctl(m_sharedMemoryId, IPC_RMID, nullptr) == -1) {
       std::cerr << mapMode(m_mode)
                 << ": ~SharedMemory(): shmctl failed: " << std::strerror(errno)
                 << '\n';

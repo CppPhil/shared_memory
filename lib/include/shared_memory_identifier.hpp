@@ -8,6 +8,7 @@ namespace sm {
 inline constexpr std::wstring_view sharedMemoryName{L"SHARED_MEMORY_NAME"};
 #else
 inline constexpr std::string_view ftokFilePath{"server"};
+inline constexpr int projectId{1};
 #endif
 
 class SharedMemoryIdentifier {

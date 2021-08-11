@@ -23,6 +23,11 @@ target_include_directories(
   PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+target_link_libraries(
+  ${LIB_NAME}
+  PUBLIC
+  Threads::Threads)
+
 if(WIN32)
   target_link_libraries(
     ${LIB_NAME}
