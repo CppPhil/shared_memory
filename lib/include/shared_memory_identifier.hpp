@@ -6,6 +6,8 @@
 namespace sm {
 #ifdef _WIN32
 inline constexpr std::wstring_view sharedMemoryName{L"SHARED_MEMORY_NAME"};
+#else
+inline constexpr std::string_view ftokFilePath{"server"};
 #endif
 
 class SharedMemoryIdentifier {

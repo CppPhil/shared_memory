@@ -29,7 +29,7 @@ int main()
 
     for (std::size_t i{0}; i < buffer.size(); ++i) {
       if (i % 2 == 0) {
-        buffer[i] &= ~0x20;
+        buffer[i] &= ~0x20; /* uppercase */
       }
     }
 

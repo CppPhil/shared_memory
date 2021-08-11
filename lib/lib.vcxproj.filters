@@ -15,42 +15,30 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\code_conv.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\constants.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\format_windows_error.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\named_pipe.hpp">
+    <ClInclude Include="include\shared_memory_identifier.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\pipe_name.hpp">
+    <ClInclude Include="include\shared_memory.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\status.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\string_types.hpp">
+    <ClInclude Include="include\windows_exception.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\code_conv.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\format_windows_error.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\named_pipe.cpp">
+    <ClCompile Include="src\shared_memory_identifier.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\pipe_name.cpp">
+    <ClCompile Include="src\shared_memory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\status.cpp">
+    <ClCompile Include="src\windows_exception.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -147,20 +147,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="include\code_conv.hpp" />
-    <ClInclude Include="include\constants.hpp" />
     <ClInclude Include="include\format_windows_error.hpp" />
-    <ClInclude Include="include\named_pipe.hpp" />
-    <ClInclude Include="include\pipe_name.hpp" />
-    <ClInclude Include="include\status.hpp" />
-    <ClInclude Include="include\string_types.hpp" />
+    <ClInclude Include="include\shared_memory_identifier.hpp" />
+    <ClInclude Include="include\shared_memory.hpp" />
+    <ClInclude Include="include\windows_exception.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\code_conv.cpp" />
     <ClCompile Include="src\format_windows_error.cpp" />
-    <ClCompile Include="src\named_pipe.cpp" />
-    <ClCompile Include="src\pipe_name.cpp" />
-    <ClCompile Include="src\status.cpp" />
+    <ClCompile Include="src\shared_memory_identifier.cpp" />
+    <ClCompile Include="src\shared_memory.cpp" />
+    <ClCompile Include="src\windows_exception.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
