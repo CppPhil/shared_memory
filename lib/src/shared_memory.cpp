@@ -201,7 +201,8 @@ SharedMemory::SharedMemory(
 
     m_memory = memory;
 
-    sem_t* semaphore{reinterpret_cast<sem_t*>(static_cast<std::byte*>(m_memory) + m_byteCount)};
+    sem_t* semaphore{reinterpret_cast<sem_t*>(
+      static_cast<std::byte*>(m_memory) + m_byteCount)};
 
     const int statusCode{sem_init(semaphore, 1, 0)};
 

@@ -17,6 +17,10 @@ int main()
 #ifdef _WIN32
     const sm::SharedMemoryIdentifier identifier{
       std::wstring{sm::sharedMemoryName}};
+#else
+    const sm::SharedMemoryIdentifier identifier{
+      std::string{sm::ftokFilePath, sm::projectId}};
+#endif
 
     sm::SharedMemory sharedMemory{
       sm::SharedMemory::Mode::Attach, identifier, sm::defaultSharedMemorySize};
@@ -40,7 +44,6 @@ int main()
       std::cerr << "Client: could not write!\n";
       return EXIT_FAILURE;
     }
-#endif
   }
   catch (const sm::WindowsException& ex) {
     std::wcerr << L"Client caught WindowsException: " << ex.wideWhat() << L'\n';

@@ -17,8 +17,7 @@ int main()
       std::wstring{sm::sharedMemoryName}};
 #else
     const sm::SharedMemoryIdentifier identifier{
-    	std::string{sm::ftokFilePath}, sm::projectId
-    };
+      std::string{sm::ftokFilePath}, sm::projectId};
 #endif
 
     sm::SharedMemory sharedMemory{
