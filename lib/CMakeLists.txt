@@ -1,12 +1,14 @@
 set(LIB_HEADERS
     include/format_windows_error.hpp
     include/shared_memory_identifier.hpp
-    include/shared_memory.hpp)
+    include/shared_memory.hpp
+    include/windows_exception.hpp)
 
 set(LIB_SOURCES
     src/format_windows_error.cpp
     src/shared_memory_identifier.cpp
-    src/shared_memory.cpp)
+    src/shared_memory.cpp
+    src/windows_exception.cpp)
 
 set(LIB_NAME shared_memory_lib)
 

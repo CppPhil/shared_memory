@@ -1,3 +1,8 @@
+#include <iomanip>
+#include <ios>
+#include <locale>
+#include <sstream>
+
 #include "format_windows_error.hpp"
 
 namespace sm {
@@ -29,7 +34,13 @@ std::wstring formatWindowsError(DWORD errorCode)
       throw std::runtime_error{"LocalFree failed!"};
     }
 
-    return result;
+    std::wostringstream woss{};
+    woss.imbue(std::locale::classic());
+
+    woss << L"error code: 0x" << std::uppercase << std::hex << std::setw(2)
+         << std::setfill(L'0') << errorCode << L" message: " << result;
+
+    return woss.str();
   }
 
   throw std::runtime_error{"Couldn't allocate memory for FormatMessageW!"};

@@ -7,7 +7,7 @@ namespace sm {
 SharedMemoryIdentifier::SharedMemoryIdentifier(std::wstring name)
   : m_name{std::move(name)}
 {
-  m_name = L"Global\\" + m_name;
+  m_name = L"Local\\" + m_name;
 }
 #else
 SharedMemoryIdentifier::SharedMemoryIdentifier(

@@ -9,6 +9,8 @@
 
 int main()
 {
+  std::cout << "Shared memory server started\n";
+
   try {
 #ifdef _WIN32
     const sm::SharedMemoryIdentifier identifier{
@@ -23,6 +25,12 @@ int main()
     if (!sharedMemory.read(0, buffer.data(), buffer.size())) {
       std::cerr << "Server: could not read\n!";
       return EXIT_FAILURE;
+    }
+
+    for (std::size_t i{0}; i < buffer.size(); ++i) {
+      if (i % 2 == 0) {
+        buffer[i] &= ~0x20;
+      }
     }
 
     std::reverse(buffer.begin(), buffer.end());

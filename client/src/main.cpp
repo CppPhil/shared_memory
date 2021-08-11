@@ -11,6 +11,8 @@
 
 int main()
 {
+  std::cout << "Shared memory client started.\n";
+
   try {
 #ifdef _WIN32
     const sm::SharedMemoryIdentifier identifier{
@@ -25,6 +27,14 @@ int main()
     for (std::size_t i{0}; i < array.size(); ++i) {
       array[i] = alphabet[i % alphabet.size()];
     }
+
+    std::cout << "Client about to write: ";
+
+    for (char c : array) {
+      std::cout << c;
+    }
+
+    std::cout << '\n';
 
     if (!sharedMemory.write(0, array.data(), array.size())) {
       std::cerr << "Client: could not write!\n";

@@ -4,11 +4,16 @@
 #include "format_windows_error.hpp"
 #include "shared_memory.hpp"
 
+#ifdef _MSC_VER
+#define SM_UNREACHABLE() __assume(0)
+#else
+#define SM_UNREACHABLE() __builtin_unreachable()
+#endif
+
 namespace sm {
 namespace {
 #ifdef _WIN32
-constexpr std::wstring_view semaphoreName{
-  L"Global\\MY_SHARED_MEMORY_SEMAPHORE"};
+constexpr std::wstring_view semaphoreName{L"Local\\MY_SHARED_MEMORY_SEMAPHORE"};
 
 [[nodiscard]] HANDLE create(LPCWSTR name, DWORD size)
 {
@@ -64,6 +69,8 @@ const wchar_t* mapMode(SharedMemory::Mode mode)
   else if (mode == SharedMemory::Mode::Attach) {
     return L"client";
   }
+
+  SM_UNREACHABLE();
 }
 #else
 // TODO: HERE
@@ -76,6 +83,8 @@ const char* mapMode(SharedMemory::Mode mode)
   else if (mode == SharedMemory::Mode::Attach) {
     return "client";
   }
+
+  SM_UNREACHABLE();
 }
 #endif
 } // anonymous namespace
