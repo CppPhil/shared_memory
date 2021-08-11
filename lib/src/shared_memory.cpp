@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string_view>
 
+#include "format_windows_error.hpp"
 #include "shared_memory.hpp"
 
 namespace sm {
@@ -20,7 +21,9 @@ constexpr std::wstring_view semaphoreName{
     /* lpName */ name)};
 
   if (handle == nullptr) {
-    throw std::runtime_error{"Server: CreateFileMappingW failed!"};
+    throw WindowsException{
+      L"Server: CreateFileMappingW failed, error message: "
+      + formatWindowsError(GetLastError())};
   }
 
   return handle;
@@ -34,8 +37,9 @@ constexpr std::wstring_view semaphoreName{
     /* lpName */ name)};
 
   if (handle == nullptr) {
-    throw std::runtime_error{
-      "Client: Could not attach to shared memory segment."};
+    throw WindowsException{
+      L"Client: OpenFileMappinW failed, error message: "
+      + formatWindowsError(GetLastError())};
   }
 
   return handle;
@@ -50,6 +54,28 @@ constexpr std::wstring_view semaphoreName{
     /* lpName */ name)};
 
   return hSemaphore;
+}
+
+const wchar_t* mapMode(SharedMemory::Mode mode)
+{
+  if (mode == SharedMemory::Mode::Create) {
+    return L"server";
+  }
+  else if (mode == SharedMemory::Mode::Attach) {
+    return L"client";
+  }
+}
+#else
+// TODO: HERE
+
+const char* mapMode(SharedMemory::Mode mode)
+{
+  if (mode == SharedMemory::Mode::Create) {
+    return "server";
+  }
+  else if (mode == SharedMemory::Mode::Attach) {
+    return "client";
+  }
 }
 #endif
 } // anonymous namespace
@@ -87,7 +113,10 @@ SharedMemory::SharedMemory(
 
   if (m_memory == nullptr) {
     CloseHandle(/* hObject */ m_hMapFile);
-    throw std::runtime_error{"Server: MapViewOfFile failed!"};
+
+    throw WindowsException{
+      mapMode(m_mode) + std::wstring{L": MapViewOfFile failed, error message: "}
+      + formatWindowsError(GetLastError())};
   }
 
   m_hSemaphore = createSemaphore(semaphoreName.data());
@@ -95,7 +124,11 @@ SharedMemory::SharedMemory(
   if (m_hSemaphore == nullptr) {
     UnmapViewOfFile(/* lpBaseAddress */ m_memory);
     CloseHandle(/* hObject */ m_hMapFile);
-    throw std::runtime_error{"Server: Could not create mutex!"};
+
+    throw WindowsException{
+      mapMode(m_mode)
+      + std::wstring{L": CreateSemaphoreW failed, error message: "}
+      + formatWindowsError(GetLastError())};
   }
 #endif
 }
@@ -104,15 +137,22 @@ SharedMemory::~SharedMemory()
 {
 #ifdef _WIN32
   if (!CloseHandle(/* hObject */ m_hSemaphore)) {
-    std::wcerr << L"~SharedMemory(): CloseHandle failed for m_hSemaphore.\n";
+    std::wcerr << mapMode(m_mode) << L": "
+               << L"~SharedMemory(): CloseHandle failed for m_hSemaphore, "
+                  L"error message: "
+               << formatWindowsError(GetLastError()) << L'\n';
   }
 
   if (!UnmapViewOfFile(/* lpBaseAddress */ m_memory)) {
-    std::wcerr << L"~SharedMemory(): UnmapViewOfFile failed!\n";
+    std::wcerr << mapMode(m_mode) << L": "
+               << L"~SharedMemory(): UnmapViewOfFile failed, error message: "
+               << formatWindowsError(GetLastError()) << L'\n';
   }
 
   if (!CloseHandle(/* hObject */ m_hMapFile)) {
-    std::wcerr << L"~SharedMemory(): CloseHandle failed!\n";
+    std::wcerr << mapMode(m_mode) << L": "
+               << L"~SharedMemory(): CloseHandle failed, error message: "
+               << formatWindowsError(GetLastError()) << L'\n';
   }
 #endif
 }
@@ -136,6 +176,8 @@ bool SharedMemory::write(
         /* hSemaphore */ m_hSemaphore,
         /* lReleaseCount */ 1,
         /* lpPreviousCount */ nullptr)) {
+    std::wcerr << mapMode(m_mode) << L": ReleaseSemaphore failed in write: "
+               << formatWindowsError(GetLastError()) << L'\n';
     return false;
   }
 
@@ -180,10 +222,20 @@ bool SharedMemory::read(
     break;
   }
   case WAIT_ABANDONED:
-    [[fallthrough]];
+    std::wcerr << mapMode(m_mode)
+               << L": SharedMemory::read: WaitForSingleObjcet resulted in "
+                  L"WAIT_ABANDONED!\n";
+    return false;
   case WAIT_TIMEOUT:
-    [[fallhtrough]];
+    std::wcerr << mapMode(m_mode)
+               << L": SharedMemory::read: WaitForSingleObjcet resulted in "
+                  L"WAIT_TIMEOUT!\n";
+    return false;
   case WAIT_FAILED:
+    std::wcerr << mapMode(m_mode)
+               << L": SharedMemory::read: WaitForSingleObjcet resulted in "
+                  L"WAIT_TIMEOUT, error message: "
+               << formatWindowsError(GetLastError()) << L'\n';
     return false;
   }
 

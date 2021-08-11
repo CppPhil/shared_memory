@@ -1,8 +1,10 @@
 set(LIB_HEADERS
+    include/format_windows_error.hpp
     include/shared_memory_identifier.hpp
     include/shared_memory.hpp)
 
 set(LIB_SOURCES
+    src/format_windows_error.cpp
     src/shared_memory_identifier.cpp
     src/shared_memory.cpp)
 

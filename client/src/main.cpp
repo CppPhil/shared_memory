@@ -7,6 +7,7 @@
 #include <string>
 
 #include "shared_memory.hpp"
+#include "windows_exception.hpp"
 
 int main()
 {
@@ -30,6 +31,10 @@ int main()
       return EXIT_FAILURE;
     }
 #endif
+  }
+  catch (const sm::WindowsException& ex) {
+    std::wcerr << L"Client caught WindowsException: " << ex.wideWhat() << L'\n';
+    return EXIT_FAILURE;
   }
   catch (const std::runtime_error& ex) {
     std::cerr << "Client caught runtime_error: " << ex.what() << '\n';

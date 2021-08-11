@@ -5,6 +5,7 @@
 #include <stdexcept>
 
 #include "shared_memory_identifier.hpp"
+#include "windows_exception.hpp"
 
 #ifdef _WIN32
 #include <Windows.h>
