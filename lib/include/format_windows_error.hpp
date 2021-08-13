@@ -1,5 +1,4 @@
-#ifndef INCG_SM_FORMAT_WINDOWS_ERROR_HPP
-#define INCG_SM_FORMAT_WINDOWS_ERROR_HPP
+#pragma once
 #include <stdexcept>
 #include <string>
 
@@ -12,4 +11,3 @@ namespace sm {
 std::wstring formatWindowsError(DWORD errorCode);
 #endif // _WIN32
 } // namespace sm
-#endif // INCG_SM_FORMAT_WINDOWS_ERROR_HPP

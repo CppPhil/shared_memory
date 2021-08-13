@@ -1,5 +1,4 @@
-#ifndef INCG_SM_WINDOWS_EXCEPTION_HPP
-#define INCG_SM_WINDOWS_EXCEPTION_HPP
+#pragma once
 #include <stdexcept>
 #include <string>
 
@@ -16,4 +15,3 @@ private:
   std::wstring m_errorMessage;
 };
 } // namespace sm
-#endif // INCG_SM_WINDOWS_EXCEPTION_HPP

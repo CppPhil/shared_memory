@@ -1,4 +1,5 @@
 #include <cerrno>
+#include <cstddef>
 #include <cstring>
 
 #include <iostream>
@@ -36,7 +37,7 @@ constexpr std::wstring_view semaphoreName{L"Local\\MY_SHARED_MEMORY_SEMAPHORE"};
 
   if (handle == nullptr) {
     throw WindowsException{
-      L"Server: CreateFileMappingW failed, error message: "
+      L"Server: CreateFileMappingW failed, error: message : "
       + formatWindowsError(GetLastError())};
   }
 
@@ -52,7 +53,7 @@ constexpr std::wstring_view semaphoreName{L"Local\\MY_SHARED_MEMORY_SEMAPHORE"};
 
   if (handle == nullptr) {
     throw WindowsException{
-      L"Client: OpenFileMappinW failed, error message: "
+      L"Client: OpenFileMappingW failed, error message: "
       + formatWindowsError(GetLastError())};
   }
 
@@ -88,7 +89,7 @@ key_t createIpcKey(std::string_view filePath, int projectId)
 
   if (key == -1) {
     throw std::runtime_error{
-      "Server: ftok failed: " + std::string{std::strerror(errno)}};
+      "ftok failed: " + std::string{std::strerror(errno)}};
   }
 
   return key;
@@ -160,14 +161,14 @@ SharedMemory::SharedMemory(
   }
 
   m_memory = MapViewOfFile(
-    /* hFileMappingObject */ m_hMapFile,
+    /* hFileMapingObject */ m_hMapFile,
     /* dwDesiredAccess */ FILE_MAP_ALL_ACCESS,
     /* dwFileOffsetHigh */ 0,
     /* dwFileOffsetLow */ 0,
     /* dwNumberOfBytesToMap */ m_byteCount);
 
   if (m_memory == nullptr) {
-    CloseHandle(/* hObject */ m_hMapFile);
+    CloseHandle(m_hMapFile);
 
     throw WindowsException{
       mapMode(m_mode) + std::wstring{L": MapViewOfFile failed, error message: "}
@@ -177,8 +178,8 @@ SharedMemory::SharedMemory(
   m_hSemaphore = createSemaphore(semaphoreName.data());
 
   if (m_hSemaphore == nullptr) {
-    UnmapViewOfFile(/* lpBaseAddress */ m_memory);
-    CloseHandle(/* hObject */ m_hMapFile);
+    UnmapViewOfFile(m_memory);
+    CloseHandle(m_hMapFile);
 
     throw WindowsException{
       mapMode(m_mode)
@@ -216,7 +217,7 @@ SharedMemory::SharedMemory(
 
     m_semaphore = semaphore;
   }
-  else if (mode == Mode::Attach) {
+  else if (m_mode == Mode::Attach) {
     m_sharedMemoryId = fetchSharedMemoryId(key, m_actualByteCount);
     void* memory{shmat(m_sharedMemoryId, nullptr, 0)};
 
@@ -236,22 +237,22 @@ SharedMemory::SharedMemory(
 SharedMemory::~SharedMemory()
 {
 #ifdef _WIN32
-  if (!CloseHandle(/* hObject */ m_hSemaphore)) {
-    std::wcerr << mapMode(m_mode) << L": "
-               << L"~SharedMemory(): CloseHandle failed for m_hSemaphore, "
+  if (!CloseHandle(m_hSemaphore)) {
+    std::wcerr << mapMode(m_mode)
+               << L": ~SharedMemory(): CloseHandle failed for m_hSemaphore, "
                   L"error message: "
                << formatWindowsError(GetLastError()) << L'\n';
   }
 
-  if (!UnmapViewOfFile(/* lpBaseAddress */ m_memory)) {
-    std::wcerr << mapMode(m_mode) << L": "
-               << L"~SharedMemory(): UnmapViewOfFile failed, error message: "
+  if (!UnmapViewOfFile(m_memory)) {
+    std::wcerr << mapMode(m_mode)
+               << L": ~SharedMemory(): UnmapViewOfFile failed, error message: "
                << formatWindowsError(GetLastError()) << L'\n';
   }
 
-  if (!CloseHandle(/* hObject */ m_hMapFile)) {
-    std::wcerr << mapMode(m_mode) << L": "
-               << L"~SharedMemory(): CloseHandle failed, error message: "
+  if (!CloseHandle(m_hMapFile)) {
+    std::wcerr << mapMode(m_mode)
+               << L": ~SharedMemory(): CloseHandle failed, error message: "
                << formatWindowsError(GetLastError()) << L'\n';
   }
 #else
@@ -271,7 +272,7 @@ SharedMemory::~SharedMemory()
   if (m_mode == Mode::Create) {
     if (shmctl(m_sharedMemoryId, IPC_RMID, nullptr) == -1) {
       std::cerr << mapMode(m_mode)
-                << ": ~SharedMemory(): shmctl failed: " << std::strerror(errno)
+                << ": ~SharedMemor(): shmctl failed: " << std::strerror(errno)
                 << '\n';
     }
   }
@@ -345,7 +346,7 @@ bool SharedMemory::read(
 
   switch (waitResult) {
   case WAIT_OBJECT_0: {
-    const std::byte* const baseAddress{static_cast<std::byte*>(m_memory)};
+    const std::byte* const baseAddress{static_cast<const std::byte*>(m_memory)};
 
     const std::byte* const startAddress{baseAddress + offset};
 
@@ -358,17 +359,17 @@ bool SharedMemory::read(
   }
   case WAIT_ABANDONED:
     std::wcerr << mapMode(m_mode)
-               << L": SharedMemory::read: WaitForSingleObjcet resulted in "
+               << "L: SharedMemory::read: WaitForSingleObject resulted in "
                   L"WAIT_ABANDONED!\n";
     return false;
   case WAIT_TIMEOUT:
     std::wcerr << mapMode(m_mode)
-               << L": SharedMemory::read: WaitForSingleObjcet resulted in "
+               << L": SharedMemory::read: WaitForSingleObject resulted in "
                   L"WAIT_TIMEOUT!\n";
     return false;
   case WAIT_FAILED:
     std::wcerr << mapMode(m_mode)
-               << L": SharedMemory::read: WaitForSingleObjcet resulted in "
+               << L": SharedMemory::read: WaitForSingleObject resulted in "
                   L"WAIT_TIMEOUT, error message: "
                << formatWindowsError(GetLastError()) << L'\n';
     return false;

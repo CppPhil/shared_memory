@@ -11,14 +11,14 @@ std::wstring formatWindowsError(DWORD errorCode)
 {
   LPWSTR      buffer{nullptr};
   const DWORD statusCode{FormatMessageW(
-    /* dwFlags */ FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER
+    FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER
       | FORMAT_MESSAGE_IGNORE_INSERTS,
-    /* lpSource */ nullptr,
-    /* dwMessageId */ errorCode,
-    /* dwLanguageId */ MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-    /* lpBuffer */ reinterpret_cast<LPWSTR>(&buffer),
-    /* nSize */ 0,
-    /* Arguments */ nullptr)};
+    nullptr,
+    errorCode,
+    MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+    reinterpret_cast<LPWSTR>(&buffer),
+    0,
+    nullptr)};
 
   if (statusCode == 0) {
     throw std::runtime_error{"FormatMessageW failed!"};

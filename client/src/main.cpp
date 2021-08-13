@@ -1,9 +1,7 @@
-#include <cstddef>
 #include <cstdlib>
 
 #include <array>
 #include <iostream>
-#include <stdexcept>
 #include <string>
 
 #include "shared_memory.hpp"

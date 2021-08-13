@@ -26,7 +26,7 @@ int main()
     std::array<char, sm::defaultSharedMemorySize> buffer{};
 
     if (!sharedMemory.read(0, buffer.data(), buffer.size())) {
-      std::cerr << "Server: could not read\n!";
+      std::cerr << "Server: could not read!\n";
       return EXIT_FAILURE;
     }
 

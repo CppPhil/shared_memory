@@ -1,5 +1,4 @@
-#ifndef INCG_SM_SHARED_MEMORY_HPP
-#define INCG_SM_SHARED_MEMORY_HPP
+#pragma once
 #include <cstddef>
 
 #include <stdexcept>
@@ -53,4 +52,3 @@ private:
 #endif
 };
 } // namespace sm
-#endif // INCG_SM_SHARED_MEMORY_HPP

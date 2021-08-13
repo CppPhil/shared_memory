@@ -1,5 +1,4 @@
-#ifndef INCG_SM_SHARED_MEMORY_IDENTIFIER_HPP
-#define INCG_SM_SHARED_MEMORY_IDENTIFIER_HPP
+#pragma once
 #include <string>
 #include <string_view>
 
@@ -36,4 +35,3 @@ private:
 #endif
 };
 } // namespace sm
-#endif // INCG_SM_SHARED_MEMORY_IDENTIFIER_HPP
