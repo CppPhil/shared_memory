@@ -22,6 +22,22 @@
 
 namespace sm {
 namespace {
+[[nodiscard]] bool
+isInBounds(std::ptrdiff_t offset, std::size_t byteCount, std::size_t size)
+{
+  if (offset < 0) {
+    return false;
+  }
+
+  const std::size_t unsignedOffset{static_cast<std::size_t>(offset)};
+
+  if (unsignedOffset > size) {
+    return false;
+  }
+
+  return byteCount <= (size - unsignedOffset);
+}
+
 #ifdef _WIN32
 constexpr std::wstring_view semaphoreName{L"Local\\MY_SHARED_MEMORY_SEMAPHORE"};
 
@@ -272,7 +288,7 @@ SharedMemory::~SharedMemory()
   if (m_mode == Mode::Create) {
     if (shmctl(m_sharedMemoryId, IPC_RMID, nullptr) == -1) {
       std::cerr << mapMode(m_mode)
-                << ": ~SharedMemor(): shmctl failed: " << std::strerror(errno)
+                << ": ~SharedMemory(): shmctl failed: " << std::strerror(errno)
                 << '\n';
     }
   }
@@ -289,7 +305,7 @@ bool SharedMemory::write(
   const void*    data,
   std::size_t    byteCount)
 {
-  if ((offset + byteCount) > m_byteCount) {
+  if (!isInBounds(offset, byteCount, m_byteCount)) {
     return false;
   }
 
@@ -335,7 +351,7 @@ bool SharedMemory::read(
   void*          buffer,
   std::size_t    bytesToRead) const
 {
-  if ((offset + bytesToRead) > m_byteCount) {
+  if (!isInBounds(offset, bytesToRead, m_byteCount)) {
     return false;
   }
 
@@ -359,7 +375,7 @@ bool SharedMemory::read(
   }
   case WAIT_ABANDONED:
     std::wcerr << mapMode(m_mode)
-               << "L: SharedMemory::read: WaitForSingleObject resulted in "
+               << L": SharedMemory::read: WaitForSingleObject resulted in "
                   L"WAIT_ABANDONED!\n";
     return false;
   case WAIT_TIMEOUT:
@@ -370,7 +386,7 @@ bool SharedMemory::read(
   case WAIT_FAILED:
     std::wcerr << mapMode(m_mode)
                << L": SharedMemory::read: WaitForSingleObject resulted in "
-                  L"WAIT_TIMEOUT, error message: "
+                  L"WAIT_FAILED, error message: "
                << formatWindowsError(GetLastError()) << L'\n';
     return false;
   }
